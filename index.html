@@ -1,0 +1,831 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Portal de Artículos - Actualidad, MotoGP & F1</title>
+  <style>
+    :root {
+      --bg-color: #0f141c;
+      --card-bg: #18202c;
+      --card-border: #263345;
+      --text-main: #f1f5f9;
+      --text-muted: #94a3b8;
+      --accent-f1: #e10600;
+      --accent-motogp: #0080ff;
+      --accent-actualidad: #10b981;
+      --accent-primary: #f59e0b;
+      --font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      font-family: var(--font-family);
+      line-height: 1.6;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    #toast-msg {
+      position: fixed;
+      top: 24px;
+      right: 24px;
+      background: #059669;
+      color: #ffffff;
+      padding: 1rem 1.75rem;
+      border-radius: 10px;
+      font-weight: 700;
+      font-size: 1.05rem;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+      z-index: 99999;
+      display: none;
+      align-items: center;
+      gap: 0.6rem;
+      border: 1px solid #34d399;
+      animation: fadeIn 0.3s ease;
+    }
+
+    header {
+      background: linear-gradient(180deg, #161e2b 0%, #0f141c 100%);
+      border-bottom: 1px solid var(--card-border);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .header-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 1rem 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+
+    .logo-area { display: flex; align-items: center; gap: 0.75rem; cursor: pointer; user-select: none; }
+    .logo-badge {
+      background: linear-gradient(135deg, var(--accent-f1), var(--accent-primary));
+      padding: 0.4rem 0.8rem;
+      border-radius: 8px;
+      font-weight: 900;
+      font-size: 1.1rem;
+      color: #fff;
+    }
+    .logo-title { font-size: 1.35rem; font-weight: 800; }
+
+    .btn-create {
+      background: linear-gradient(135deg, #2563eb, #1d4ed8);
+      color: white;
+      border: none;
+      padding: 0.65rem 1.35rem;
+      border-radius: 8px;
+      font-weight: 700;
+      cursor: pointer;
+      font-size: 0.95rem;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+    .btn-create:hover { filter: brightness(1.2); transform: translateY(-1px); }
+
+    /* BARRA DE DESPLEGABLES */
+    .dropdown-bar {
+      background-color: #141b24;
+      border-bottom: 1px solid var(--card-border);
+      padding: 0.85rem 1.5rem;
+    }
+    .dropdown-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 1.25rem;
+    }
+    .dropdown-group { display: flex; flex-direction: column; gap: 0.35rem; }
+    .dropdown-label {
+      font-size: 0.85rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .badge-dot { width: 10px; height: 10px; border-radius: 50%; }
+    .dot-actualidad { background-color: var(--accent-actualidad); }
+    .dot-motogp { background-color: var(--accent-motogp); }
+    .dot-f1 { background-color: var(--accent-f1); }
+
+    .category-select {
+      background-color: #1e293b;
+      color: var(--text-main);
+      border: 1px solid var(--card-border);
+      padding: 0.65rem 1rem;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      cursor: pointer;
+      width: 100%;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .category-select:focus { border-color: #3b82f6; }
+
+    main {
+      flex: 1;
+      max-width: 1200px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 2rem 1.5rem;
+    }
+
+    /* FORMULARIO DIRECTO */
+    .form-section {
+      display: none;
+      background-color: var(--card-bg);
+      border: 1px solid #3b82f6;
+      border-radius: 12px;
+      padding: 2rem;
+      margin-bottom: 2.5rem;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+      animation: fadeIn 0.3s ease;
+    }
+    .form-section.visible { display: block; }
+    .form-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+      padding-bottom: 0.75rem;
+      border-bottom: 1px solid var(--card-border);
+    }
+    .form-header h3 { font-size: 1.3rem; font-weight: 800; color: #fff; }
+    .btn-close-form { background: none; border: none; color: var(--text-muted); font-size: 1.3rem; cursor: pointer; }
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 1.25rem;
+      margin-bottom: 1.2rem;
+    }
+    .form-group { margin-bottom: 1.2rem; }
+    .form-group label { display: block; margin-bottom: 0.4rem; font-size: 0.9rem; font-weight: 600; color: var(--text-muted); }
+    .form-control {
+      width: 100%;
+      background-color: #131922;
+      border: 1px solid var(--card-border);
+      color: #fff;
+      padding: 0.75rem 1rem;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      font-family: inherit;
+    }
+    .form-control:focus { outline: none; border-color: #3b82f6; }
+    .key-hint { font-size: 0.75rem; color: #38bdf8; margin-top: 0.25rem; display: block; }
+    textarea.form-control { min-height: 140px; resize: vertical; }
+    .form-buttons { display: flex; justify-content: flex-end; gap: 1rem; margin-top: 1rem; }
+    .btn-cancel {
+      background-color: #273344;
+      color: var(--text-muted);
+      border: none;
+      padding: 0.65rem 1.3rem;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .btn-submit {
+      background: linear-gradient(135deg, #10b981, #059669);
+      color: white;
+      border: none;
+      padding: 0.65rem 1.6rem;
+      border-radius: 8px;
+      font-weight: 700;
+      cursor: pointer;
+      font-size: 1rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .btn-submit:hover { filter: brightness(1.15); transform: translateY(-1px); }
+
+    /* GRID ARTÍCULOS */
+    .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
+    .section-title { font-size: 1.6rem; font-weight: 800; }
+    .articles-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 3rem;
+    }
+    .article-card {
+      background-color: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      overflow: hidden;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      transition: transform 0.2s, border-color 0.2s;
+    }
+    .article-card:hover { transform: translateY(-4px); border-color: #3b82f6; }
+    .card-banner { height: 8px; }
+    .banner-Actualidad { background: var(--accent-actualidad); }
+    .banner-MotoGP { background: var(--accent-motogp); }
+    .banner-F1 { background: var(--accent-f1); }
+    .card-body { padding: 1.5rem; display: flex; flex-direction: column; flex: 1; }
+    .card-category { font-size: 0.75rem; font-weight: 800; text-transform: uppercase; margin-bottom: 0.5rem; }
+    .card-title { font-size: 1.2rem; font-weight: 700; margin-bottom: 0.75rem; }
+    .card-snippet {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+      margin-bottom: 1.25rem;
+      flex: 1;
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .card-footer { display: flex; justify-content: space-between; color: var(--text-muted); font-size: 0.8rem; border-top: 1px solid var(--card-border); padding-top: 0.85rem; }
+    .read-more { color: #38bdf8; font-weight: 600; }
+
+    /* DETALLE */
+    #single-article-view { display: none; animation: fadeIn 0.3s ease; }
+    .back-nav {
+      margin-bottom: 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+    .btn-back {
+      background-color: #263345;
+      color: #fff;
+      border: 1px solid #3b4d66;
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .btn-back:hover { background-color: #33445c; }
+    .article-actions { display: flex; gap: 0.6rem; }
+    .btn-edit {
+      background-color: #1e3a8a;
+      color: #93c5fd;
+      border: 1px solid #2563eb;
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .btn-edit:hover { background-color: #2563eb; color: #fff; }
+    .btn-delete {
+      background-color: rgba(239, 68, 68, 0.15);
+      color: #f87171;
+      border: 1px solid rgba(239, 68, 68, 0.4);
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .btn-delete:hover { background-color: #ef4444; color: #fff; }
+    .article-full-card {
+      background-color: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 2.5rem;
+    }
+    .article-full-category {
+      display: inline-block;
+      padding: 0.35rem 0.85rem;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      margin-bottom: 1rem;
+    }
+    .cat-Actualidad { background-color: rgba(16, 185, 129, 0.2); color: #34d399; }
+    .cat-MotoGP { background-color: rgba(0, 128, 255, 0.2); color: #60a5fa; }
+    .cat-F1 { background-color: rgba(225, 6, 0, 0.2); color: #f87171; }
+    .article-full-title { font-size: 2.2rem; font-weight: 800; margin-bottom: 1rem; }
+    .article-full-meta {
+      display: flex;
+      gap: 1.5rem;
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      margin-bottom: 2rem;
+      border-bottom: 1px solid var(--card-border);
+      padding-bottom: 1rem;
+    }
+    .article-full-content { font-size: 1.15rem; line-height: 1.8; white-space: pre-wrap; color: #cbd5e1; }
+
+    footer {
+      border-top: 1px solid var(--card-border);
+      background-color: #111722;
+      padding: 1.5rem;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 0.9rem;
+    }
+
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+    @media (max-width: 768px) {
+      .form-row { grid-template-columns: 1fr; }
+      .article-full-title { font-size: 1.6rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <div id="toast-msg">✅ ¡Artículo grabado correctamente!</div>
+
+  <header>
+    <div class="header-container">
+      <div class="logo-area" onclick="goToHome()" title="Ir al inicio">
+        <div class="logo-badge">PORTAL</div>
+        <div class="logo-title">Motorsport & Noticias</div>
+      </div>
+      <div>
+        <button id="btn-toggle-editor" class="btn-create" type="button" onclick="handleStartRedacting()">
+          ✍️ Redactar Artículo
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- LISTAS DESPLEGABLES POR APARTADO -->
+  <section class="dropdown-bar">
+    <div class="dropdown-container">
+      <div class="dropdown-group">
+        <label class="dropdown-label" for="select-actualidad">
+          <span class="badge-dot dot-actualidad"></span> Actualidad
+        </label>
+        <select id="select-actualidad" class="category-select" onchange="onCategorySelectChange(this)">
+          <option value="">-- Ver artículos de Actualidad --</option>
+          <option value="__home__">🏠 Volver al inicio</option>
+        </select>
+      </div>
+
+      <div class="dropdown-group">
+        <label class="dropdown-label" for="select-motogp">
+          <span class="badge-dot dot-motogp"></span> MotoGP
+        </label>
+        <select id="select-motogp" class="category-select" onchange="onCategorySelectChange(this)">
+          <option value="">-- Ver artículos de MotoGP --</option>
+          <option value="__home__">🏠 Volver al inicio</option>
+        </select>
+      </div>
+
+      <div class="dropdown-group">
+        <label class="dropdown-label" for="select-f1">
+          <span class="badge-dot dot-f1"></span> Fórmula 1
+        </label>
+        <select id="select-f1" class="category-select" onchange="onCategorySelectChange(this)">
+          <option value="">-- Ver artículos de F1 --</option>
+          <option value="__home__">🏠 Volver al inicio</option>
+        </select>
+      </div>
+    </div>
+  </section>
+
+  <!-- CONTENIDO -->
+  <main>
+
+    <!-- FORMULARIO DIRECTO EN LA PÁGINA -->
+    <section id="editor-section" class="form-section">
+      <div class="form-header">
+        <h3 id="form-heading">✍️ Redactar y Grabar Artículo</h3>
+        <button type="button" class="btn-close-form" onclick="toggleEditor(false)">&times;</button>
+      </div>
+      
+      <div>
+        <input type="hidden" id="form-article-id" value="" />
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="form-category">Apartado / Categoría *</label>
+            <select id="form-category" class="form-control">
+              <option value="Actualidad">Actualidad</option>
+              <option value="MotoGP">MotoGP</option>
+              <option value="F1">F1</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="form-author">Autor / Redactor</label>
+            <input type="text" id="form-author" class="form-control" placeholder="Nombre o alias (opcional)" />
+          </div>
+          <div class="form-group">
+            <label for="form-key">Clave de Seguridad *</label>
+            <input type="text" id="form-key" class="form-control" value="1234" />
+            <span class="key-hint">ℹ️ Clave: 1234 (o la que tú elijas)</span>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="form-title">Título del Artículo *</label>
+          <input type="text" id="form-title" class="form-control" placeholder="Escribe el título aquí..." />
+        </div>
+
+        <div class="form-group">
+          <label for="form-content">Contenido del Artículo *</label>
+          <textarea id="form-content" class="form-control" placeholder="Escribe el cuerpo del artículo aquí..."></textarea>
+        </div>
+
+        <div class="form-buttons">
+          <button type="button" class="btn-cancel" onclick="toggleEditor(false)">Cancelar</button>
+          <button type="button" id="btn-submit-article" class="btn-submit" onclick="executeSaveArticle()">
+            💾 Grabar en la Página
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- PORTADA DE ARTÍCULOS -->
+    <section id="home-view">
+      <div class="section-header">
+        <h2 class="section-title">Artículos de la Página</h2>
+        <span id="article-counter" style="color: var(--text-muted); font-size: 0.95rem;">0 artículos</span>
+      </div>
+      <div id="articles-grid" class="articles-grid"></div>
+    </section>
+
+    <!-- DETALLE DEL ARTÍCULO -->
+    <section id="single-article-view">
+      <div class="back-nav">
+        <button type="button" class="btn-back" onclick="goToHome()">
+          ← Volver a todos los artículos
+        </button>
+        <div class="article-actions">
+          <button type="button" class="btn-edit" onclick="handleEditCurrentArticle()">
+            ✏️ Editar Artículo
+          </button>
+          <button type="button" class="btn-delete" onclick="handleDeleteCurrentArticle()">
+            🗑️ Eliminar
+          </button>
+        </div>
+      </div>
+      <article class="article-full-card">
+        <span id="article-view-category" class="article-full-category"></span>
+        <h1 id="article-view-title" class="article-full-title"></h1>
+        <div class="article-full-meta">
+          <span id="article-view-author"></span>
+          <span id="article-view-date"></span>
+        </div>
+        <div id="article-view-content" class="article-full-content"></div>
+      </article>
+    </section>
+
+  </main>
+
+  <footer>
+    <p>Portal de Artículos - Actualidad, MotoGP & F1</p>
+  </footer>
+
+  <script>
+    const SafeStorage = {
+      get(key) {
+        try {
+          if (typeof window !== 'undefined' && window.localStorage) {
+            return window.localStorage.getItem(key);
+          }
+        } catch (e) {
+          console.warn("Storage inaccesible:", e);
+        }
+        return null;
+      },
+      set(key, val) {
+        try {
+          if (typeof window !== 'undefined' && window.localStorage) {
+            window.localStorage.setItem(key, val);
+          }
+        } catch (e) {
+          console.warn("Storage no pudo guardar:", e);
+        }
+      }
+    };
+
+    let currentSecretKey = SafeStorage.get('portal_articulos_clave') || "1234";
+
+    const defaultArticles = [
+      {
+        id: 'art-1',
+        title: 'Nuevos motores sostenibles y biocombustibles en la automoción',
+        category: 'Actualidad',
+        author: 'Redacción Actualidad',
+        date: '16 Oct 2026',
+        content: 'Las principales marcas mundiales avanzan en el desarrollo de combustibles sintéticos y baterías de alta densidad energética para el transporte del futuro...'
+      },
+      {
+        id: 'art-2',
+        title: 'MotoGP: Marc Márquez impresiona en los últimos test oficiales',
+        category: 'MotoGP',
+        author: 'Álvaro Ruiz',
+        date: '15 Oct 2026',
+        content: 'El ritmo exhibido durante las tandas largas coloca a la moto en una posición privilegiada de cara a la primera carrera del calendario...'
+      },
+      {
+        id: 'art-3',
+        title: 'F1: Ferrari y McLaren preparan nuevas evoluciones para el mundial',
+        category: 'F1',
+        author: 'Carlos Gómez',
+        date: '14 Oct 2026',
+        content: 'Con un paquete aerodinámico renovado en los pontones y difusor, la escudería buscará recortar la distancia en la clasificación del próximo gran premio...'
+      }
+
+
+     
+    ];
+
+    function loadArticles() {
+      try {
+        const saved = SafeStorage.get('portal_articulos_datos');
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        }
+      } catch (err) {
+        console.warn('Error leyendo articulos guardados:', err);
+      }
+      return [...defaultArticles];
+    }
+
+    function persistArticles() {
+      SafeStorage.set('portal_articulos_datos', JSON.stringify(articles));
+    }
+
+    let articles = loadArticles();
+    let currentViewingId = null;
+
+    function showToast(message) {
+      const toast = document.getElementById('toast-msg');
+      if (!toast) return;
+      toast.textContent = message || '✅ ¡Artículo grabado correctamente!';
+      toast.style.display = 'flex';
+      setTimeout(() => {
+        toast.style.display = 'none';
+      }, 4000);
+    }
+
+    function resetAllDropdowns() {
+      const selAct = document.getElementById('select-actualidad');
+      const selMoto = document.getElementById('select-motogp');
+      const selF1 = document.getElementById('select-f1');
+      if (selAct) selAct.selectedIndex = 0;
+      if (selMoto) selMoto.selectedIndex = 0;
+      if (selF1) selF1.selectedIndex = 0;
+    }
+
+    function populateDropdowns() {
+      const categories = ['Actualidad', 'MotoGP', 'F1'];
+      categories.forEach(cat => {
+        const select = document.getElementById(`select-${cat.toLowerCase()}`);
+        if (!select) return;
+
+        select.innerHTML = `
+          <option value="">-- Ver artículos de ${cat} --</option>
+          <option value="__home__">🏠 Volver al inicio</option>
+        `;
+
+        const catArticles = articles.filter(a => a.category.toLowerCase() === cat.toLowerCase());
+        catArticles.forEach(a => {
+          const opt = document.createElement('option');
+          opt.value = a.id;
+          opt.textContent = a.title.length > 55 ? a.title.slice(0, 52) + '...' : a.title;
+          select.appendChild(opt);
+        });
+      });
+    }
+
+    function onCategorySelectChange(selectEl) {
+      const val = selectEl.value;
+      if (!val) return;
+
+      if (val === '__home__') {
+        goToHome();
+      } else {
+        viewArticle(val);
+      }
+      resetAllDropdowns();
+    }
+
+    function renderArticles() {
+      const grid = document.getElementById('articles-grid');
+      const counter = document.getElementById('article-counter');
+      if (counter) counter.textContent = `${articles.length} artículo${articles.length === 1 ? '' : 's'}`;
+
+      if (!grid) return;
+
+      if (articles.length === 0) {
+        grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: var(--text-muted); padding: 2rem;">No hay artículos todavía. Pulsa en "Redactar Artículo" para crear uno.</p>';
+        return;
+      }
+
+      grid.innerHTML = articles.map(a => `
+        <article class="article-card" onclick="viewArticle('${a.id}')">
+          <div class="card-banner banner-${a.category}"></div>
+          <div class="card-body">
+            <span class="card-category" style="color: ${getCategoryColor(a.category)}">${a.category}</span>
+            <h3 class="card-title">${escapeHTML(a.title)}</h3>
+            <p class="card-snippet">${escapeHTML(a.content)}</p>
+            <div class="card-footer">
+              <span>📅 ${a.date}</span>
+              <span class="read-more">Leer artículo →</span>
+            </div>
+          </div>
+        </article>
+      `).join('');
+    }
+
+    function getCategoryColor(category) {
+      if (category === 'F1') return 'var(--accent-f1)';
+      if (category === 'MotoGP') return 'var(--accent-motogp)';
+      return 'var(--accent-actualidad)';
+    }
+
+    function escapeHTML(str) {
+      if (!str) return '';
+      return str.replace(/[&<>'"]/g, tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag));
+    }
+
+    function viewArticle(id) {
+      const article = articles.find(a => a.id === id);
+      if (!article) return;
+
+      currentViewingId = id;
+      document.getElementById('home-view').style.display = 'none';
+      document.getElementById('single-article-view').style.display = 'block';
+      toggleEditor(false);
+
+      document.getElementById('article-view-category').textContent = article.category;
+      document.getElementById('article-view-category').className = `article-full-category cat-${article.category}`;
+      document.getElementById('article-view-title').textContent = article.title;
+      document.getElementById('article-view-author').textContent = `✍️ ${article.author || 'Redacción'}`;
+      document.getElementById('article-view-date').textContent = `📅 ${article.date}`;
+      document.getElementById('article-view-content').textContent = article.content;
+
+      resetAllDropdowns();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function goToHome() {
+      currentViewingId = null;
+      document.getElementById('single-article-view').style.display = 'none';
+      document.getElementById('home-view').style.display = 'block';
+      resetAllDropdowns();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function toggleEditor(forceState) {
+      const editor = document.getElementById('editor-section');
+      if (!editor) return;
+
+      const shouldOpen = typeof forceState === 'boolean' ? forceState : !editor.classList.contains('visible');
+
+      if (shouldOpen) {
+        document.getElementById('single-article-view').style.display = 'none';
+        document.getElementById('home-view').style.display = 'block';
+        editor.classList.add('visible');
+        editor.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        setTimeout(() => {
+          const tInput = document.getElementById('form-title');
+          if (tInput) tInput.focus();
+        }, 150);
+      } else {
+        editor.classList.remove('visible');
+      }
+    }
+
+    function handleStartRedacting() {
+      document.getElementById('form-article-id').value = '';
+      document.getElementById('form-heading').textContent = '✍️ Redactar y Grabar Nuevo Artículo';
+      document.getElementById('btn-submit-article').innerHTML = '💾 Grabar en la Página';
+
+      document.getElementById('form-category').value = 'Actualidad';
+      document.getElementById('form-author').value = '';
+      document.getElementById('form-title').value = '';
+      document.getElementById('form-content').value = '';
+      document.getElementById('form-key').value = currentSecretKey;
+
+      toggleEditor(true);
+    }
+
+    function handleEditCurrentArticle() {
+      if (!currentViewingId) return;
+      const article = articles.find(a => a.id === currentViewingId);
+      if (!article) return;
+
+      document.getElementById('form-article-id').value = article.id;
+      document.getElementById('form-heading').textContent = '✏️ Modificar y Grabar Artículo';
+      document.getElementById('btn-submit-article').innerHTML = '💾 Grabar Cambios';
+
+      document.getElementById('form-category').value = article.category;
+      document.getElementById('form-author').value = article.author || '';
+      document.getElementById('form-title').value = article.title;
+      document.getElementById('form-content').value = article.content;
+      document.getElementById('form-key').value = currentSecretKey;
+
+      toggleEditor(true);
+    }
+
+    function handleDeleteCurrentArticle() {
+      if (!currentViewingId) return;
+
+      const inputKey = prompt("🔐 Introduce la clave de seguridad para eliminar este artículo:\n(Clave: " + currentSecretKey + ")");
+      if (inputKey === null) return;
+
+      if (inputKey !== currentSecretKey && inputKey !== "1234") {
+        alert("❌ Clave incorrecta. Solo con la clave autorizada puedes eliminar artículos.");
+        return;
+      }
+
+      if (confirm("¿Seguro que deseas eliminar este artículo de la página?")) {
+        articles = articles.filter(a => a.id !== currentViewingId);
+        persistArticles();
+        updateUI();
+        goToHome();
+        showToast('🗑️ Artículo eliminado correctamente');
+      }
+    }
+
+    function executeSaveArticle() {
+      const titleInput = document.getElementById('form-title');
+      const contentInput = document.getElementById('form-content');
+      const categorySelect = document.getElementById('form-category');
+      const authorInput = document.getElementById('form-author');
+      const keyInput = document.getElementById('form-key');
+
+      const title = titleInput ? titleInput.value.trim() : '';
+      const content = contentInput ? contentInput.value.trim() : '';
+      const category = categorySelect ? categorySelect.value : 'Actualidad';
+      const author = (authorInput && authorInput.value.trim()) ? authorInput.value.trim() : 'Redacción';
+      const enteredKey = keyInput ? keyInput.value.trim() : '';
+
+      if (!title) {
+        alert('⚠️ Por favor escribe el TÍTULO del artículo.');
+        if (titleInput) titleInput.focus();
+        return;
+      }
+
+      if (!content) {
+        alert('⚠️ Por favor escribe el CONTENIDO del artículo.');
+        if (contentInput) contentInput.focus();
+        return;
+      }
+
+      if (enteredKey && enteredKey !== currentSecretKey) {
+        currentSecretKey = enteredKey;
+        SafeStorage.set('portal_articulos_clave', currentSecretKey);
+      }
+
+      const editId = document.getElementById('form-article-id').value;
+
+      if (editId) {
+        const index = articles.findIndex(a => a.id === editId);
+        if (index !== -1) {
+          articles[index].category = category;
+          articles[index].title = title;
+          articles[index].author = author;
+          articles[index].content = content;
+          articles[index].date = new Date().toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' }) 
+          + ' (editado)';
+        }
+        persistArticles();
+        updateUI();
+        toggleEditor(false);
+        viewArticle(editId);
+        showToast('✅ ¡Cambios grabados con éxito!');
+      } else {
+        const today = new Date();
+        const formattedDate = today.toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' });
+
+        const newArticle = {
+          id: 'art-' + Date.now(),
+          category: category,
+          title: title,
+          author: author,
+          date: formattedDate,
+          content: content
+        };
+
+        articles.unshift(newArticle);
+        persistArticles();
+        updateUI();
+        toggleEditor(false);
+        viewArticle(newArticle.id);
+        showToast('✅ ¡Artículo grabado con éxito en la página!');
+      }
+    }
+
+    function updateUI() {
+      populateDropdowns();
+      renderArticles();
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      updateUI();
+    });
+  </script>
+</body>
+</html>
