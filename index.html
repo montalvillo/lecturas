@@ -1,0 +1,555 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>La pagina de Malanda</title>
+
+<style>
+
+ .clima-widget{
+    font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+    max-width:100%;padding:18px 20px;border-radius:16px;
+    background:#111827;color:#fff;box-shadow:0 10px 30px rgba(240, 236, 236, 0.18);
+    text-align: center;
+    min-height: 120px;
+  }
+  .clima-widget .lugar{font-size:10px;font-weight:400;margin:0}
+  .clima-widget .fecha{margin:4px 0 14px;color:#d1d5db;text-transform:capitalize}
+  .clima-widget .temp{font-size:20px;font-weight:200;line-height:1}
+  .clima-widget .detalle{margin-top:8px;color:#d1d5db}
+  .clima-widget small{color:#9ca3af}
+
+
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    background: #f1f1f1;
+    color: #222;
+}
+
+header {
+    background: #17365d;
+    color: white;
+    text-align: center;
+    padding: 20px;
+    height: 2px;
+}
+
+nav {
+    background: #263f5e;
+    padding: 15px;
+    text-align: center;
+}
+
+select {
+    width: 95%;
+    max-width: 450px;
+    padding: 13px;
+    font-size: 16px;
+    border-radius: 8px;
+}
+
+main {
+    max-width: 850px;
+    margin: auto;
+    padding: 15px;
+}
+
+article {
+    background: white;
+    border: 1px solid #e9e9e9;
+    border-radius: 16px;
+    padding: 28px;
+    margin-bottom: 18px;
+    scroll-margin-top: 90px;
+    transition: all 0.3s ease;
+}
+
+article h2 {
+    color: #17365d;
+    font-size: 24px;
+    margin-bottom: 6px;
+}
+
+article p {
+    margin-bottom: 12px;
+    color: #333;
+}
+
+article .meta {
+    font-size: 13px;
+    color: #888;
+    margin-bottom: 16px;
+}
+
+.destacado {
+    color: hsl(261, 100%, 50%);
+    font-size: 20px;
+    font-style: italic;
+}
+
+.destacado-uno {
+    color: rgb(105, 12, 218);
+    font-size: 17px;
+    font-style: italic;
+}
+
+.boton {
+    display: block;
+    margin: 20px auto;
+    padding: 13px 25px;
+    background: #17365d;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+}
+
+footer {
+    text-align: center;
+    padding: 20px;
+    background: #17365d;
+    color: white;
+}
+
+
+/* Ajustes para móviles */
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { min-height: 100vh; padding-bottom: env(safe-area-inset-bottom); }
+.clima-widget { margin: 10px; }
+nav { position: sticky; top: 0; z-index: 1000; }
+select { min-height: 48px; width: 100%; max-width: 650px; }
+main { width: 100%; }
+article { overflow-wrap: anywhere; }
+.boton { min-height: 48px; cursor: pointer; touch-action: manipulation; }
+#controlMusica { bottom: max(15px, env(safe-area-inset-bottom)) !important; right: 12px !important; }
+#controlMusica button { min-width: 42px; min-height: 42px; cursor: pointer; }
+[hidden] { display: none !important; }
+@media (max-width: 600px) {
+  .clima-widget { padding: 15px 12px; margin: 8px; }
+  .clima-widget .lugar { font-size: 12px; }
+  .clima-widget .temp { font-size: 28px; }
+  nav { padding: 10px; }
+  main { padding: 10px; }
+  article { padding: 18px 16px; }
+  article h2 { font-size: 22px; line-height: 1.25; }
+  article p { font-size: 16px; line-height: 1.6; }
+}
+</style>
+</head>
+
+<body>
+    <div class="clima-widget">
+  <p class="lugar" id="lugar">📍 Detectando tu ciudad…</p>
+  <p class="fecha" id="fecha">Cargando fecha…</p>
+  <div class="temp"><span id="temp">--</span>°C</div>
+  <p class="detalle" id="detalle">Cargando temperatura…</p>
+  <small id="actualizado"></small>
+</div>
+
+<!-- REPRODUCTOR DE MUSICA -->
+
+<div id="controlMusica" style="
+position:fixed;
+bottom:15px;
+right:15px;
+z-index:99999;
+background:#222;
+color:white;
+padding:10px 15px;
+border-radius:30px;
+box-shadow:0 2px 8px #777;
+display:flex;
+align-items:center;
+gap:10px;">
+
+<button onclick="iniciarMusica()"
+style="background:none;color:white;border:0;font-size:22px;">
+▶
+</button>
+
+<button onclick="pararMusica()"
+style="background:none;color:white;border:0;font-size:22px;">
+⏸
+</button>
+
+<span style="font-size:13px;">Música</span>
+</div>
+
+<audio id="musica" loop preload="auto">
+<source src="Introduccion 2.mp3" type="audio/mpeg">
+</audio>
+
+<!-- <header>
+    <h1>La Pagina del Malanda</h1>
+    <p>Solo de pensionese</p>
+</header> -->
+
+<nav>
+    <select id="menu" onchange="mostrarArticulo()">
+        <option value="inicio">Seleccionar artículo</option>
+        <option value="articulo1">Artículo 1 - Pensiones</option>
+         <option value="articulo2">Artículo 2 - La subida de las pensiones 😡</option>
+       <!-- <option value="articulo3">Artículo 3 - Cultura</option>
+        <option value="articulo4">Artículo 4 - Sociedad</option>
+        -->
+    </select>
+</nav>
+
+<main>
+
+<section id="inicio">
+</section>
+
+<section id="articulo1" hidden>
+    <article>
+        <h2>Pensiones</h2>
+
+        <p>
+        <span class="destacado">Antecedentes</span>
+        <br>
+        El pacto de Toledo es un acuerdo político e intitucional aprobado por el Pleno del Congreso de los Diputados de Españ
+        el 6 de Abril de 1995 para analizar los problemas estructurales de la Seguridad Social y formular recomendaciones
+        que garanticen la ostenibilada del sitema publico de pensiones a largo plazo.
+        <br>
+
+        <span class="destacado">Pilares y medidas principales</span>
+        <br>
+        <strong>Separacion de fuentes de financiacion</strong>.
+        Financiar las prestaciones contributivas con cotizaciones sociales y las prestaciones no contributivas
+        mediante impuestos, hay mas puntos, pero lo podeis encontar en cualquier pagina web.
+        <br>
+        <br>
+
+        <span class="destacado">Composicion de los miembros del Pacto de Toledo</span>
+        <br>
+        Los puestos se reparten de forma proporcional entre los grupos parlamentarios según su representación
+        en la Cámara y se actualizan en cada legislatura.
+        <br>
+        Mesa de la comisión: Dirige y coordina los trabajos mediante una presidencia, vicepresidencias
+        y secretarías elegidas entre los diputados.
+        <br><br>
+
+        <p style="color:red; font-size: 1.5rem;" >La hucha de las pensiones.</p>
+
+        Creación y primera dotación: El Fondo fue previsto en el Pacto de Toledo (1995) y regulado por la Ley 24/1997,
+        realizándose su primera aportación en el año 2000 durante el Ejecutivo de Aznar (unos 600 millones de euros / 60.000 millones de pesetas).
+        <br>
+
+        Acumulación hasta 2004: Entre 2000 y principios de 2004 se sumaron sucesivas dotaciones con cargo a los excedentes
+        de la Seguridad Social y los rendimientos financieros de sus inversiones, superando los 15.000 millones de euros al producirse el
+        relevo de Gobierno en 2004, Este incremento se produce por el superavit de la Seguridad Social, recauda mas de lo que paga en pensiones.
+        <br><br>
+
+        Evolución posterior: Según registros históricos y análisis económicos, el Fondo alcanzó su máximo en 2011
+        (66.815 millones de euros), se redujo drásticamente durante la década siguiente hasta situarse en torno a los 2.132 millones
+        en 2021 y volvió a crecer en los años posteriores mediante las cotizaciones del
+
+        <p style="color:red; font-size: 1.5rem;">Mecanismo de Equeidad Intergeneracional (MEI).</p>
+
+        El Mecanismo de Equidad Intergeneracional (MEI) es una cotización adicional a la Seguridad Social en España —vigente desde enero de 2023— destinada
+        a nutrir el Fondo de Reserva para reforzar la sostenibilidad
+        del sistema público de pensiones ante la jubilación de la generación del baby boom y fue presentado a la Comunidad Europea como plan para
+        el mantenimiento de las pensiones.
+        <br>
+
+        Aplicación: Se calcula sobre la base de cotización por contingencias comunes tanto para trabajadores por cuenta ajena como para autónomos
+        y empresas. El tipo total es del 0,90 %, repartido en un 0,75 % a cargo de la empresa y un 0,15 % a cargo del trabajador. En los autónomos,
+        el 0,90 % recae íntegramente sobre su cotización.
+
+        El Mecanismo de Equidad Intergeneracional (MEI) entró en vigor en 2023 y supone una contribución adicional que, tanto los trabajadores
+        como las empresas, deben realizar a la Seguridad Social todos los meses. Su función es afrontar el pago de las pensiones en los años próximos y se mantendrá vigente hasta 2032.
+
+        Préstamos del Estado: Mecanismo utilizado para financiar el desequilibrio de la Tesorería General de la Seguridad Social.
+        <br>
+
+        El problema surge cuan este nuevo impuesto no cubre el pago de las pensiones, no recauda.
+        El Gobierno dice que hay 20 millones de cotizantes, es un numero que no dice nada, no dice lo que recauda de (MEI) puede recaudar 20 millones y
+        con 10 millones puede recaudar 40 millones, esta claro. El porcentaje es el mismo para un sueldo de 1.200 (10,8)que para uno de 2.000 (18).
+        Y ese es el problema.
+
+        La Seguridad Social pide un prestamo al Gobierno para pagar las pensione, en 2018 el deficit era de 41.198. Actual de 136.178.
+        Las pensines se estan pagando a credito.
+
+        <br>
+        
+        <br>
+
+      
+         <br>
+</p>
+    </article>
+</section>
+
+<section id="articulo2" hidden>
+    <article>
+        <h2>La "subida "de las pensiones 💃🏻 tralara</h2>
+        
+    Todos los meses de Enero, se da el caso de numerosos pensionistas que se topan con la desagradable sorpresa 
+     de que la revalorización bruta aprobada 
+     por el Gobierno, en función del IPC, no se traduce en un aumento neto idéntico del importe de su pensión. 
+         
+    Esto se debe a que la pensión es un rendimiento del trabajo y, como tal, se halla sujeta a retención del IRPF y
+    además existe la obligación de presentar la declaración de la Renta, 
+     cuando su cuantía supera los límites legales; al igual que sucede con el resto de contribuyentes.
+         <br>
+     Es decir, al incrementarse los ingresos brutos del pensionista con la revalorización según el IPC (en 2026 se aplica un alza del 2,7% general),
+    se incrementa también el porcentaje 
+     de retención del IRPF en su nómina, cuyo tramo varía en función de los ingresos de la persona. 
+
+Así funciona la retención de IRPF de las pensiones
+
+Los porcentajes de retención por IRPF que se aplican a las pensiones dependen de estos factores:
+<br>
+
+<strong>El importe de la pensiónn.</strong> Las pagas de bajo importe suelen estar exentas de retención, o soportan una retención mínima. 
+Sin embargo, cuanto mayor sea cuantía de la prestación, mayor es el porcentaje de retención.
+
+<br>
+<strong>Por qué no es doble tributación del IRPF</strong>
+ El IRPF grava cada ingreso en el momento en que se percibe como renta. Durante la vida laboral tributa el salario y, 
+al jubilarse, la pensión tributa como rendimiento del trabajo (artículo 17.2 de la Ley 35/2006).
+       <br>
+
+<span class="destacado">OJO PENSIONISTA</span>
+<br>
+¿Que dicen los de Bruselas?La indignación ante esta injusta medida ha ido creciendo:El cobro de la pensión debe ser
+ excluido del Impuesto sobre la Renta de las Personas Físicas (IRPF) por las siguientes razones: 1º - No es un rendimiento del trabajo. 
+ 2º - Estas pensiones actuales se fueron generando durante la vida laboral que con el cobro de los salarios mensuales/anuales fuero sometidas ya al I.R.P.F 
+ Es decir ya tributaron por el impuesto. 3º - Por lo tanto al ser sometidas en la actualidad al I.R.P.F están siendo gravadas nuevamente por el mismo impuesto, 
+Cayendo claramente en la figura de “doble imposición”, que se debe corregir haciendo que la pensión quede excluida del I.R.P.F 
+<br>
+Según explica, no se paga dos veces este impuesto sino que se tributa por los ingresos: “Es un impuesto sobre la renta de las personas físicas, 
+no afecta únicamente al salario de los trabajadores”. “Las pensiones que no se enmarcan en los mínimos establecidos deben tributar porque una pensión 
+no deja de ser una renta que se percibe, igual que las rentas de capital con los alquileres o las de otros orígenes”, comenta la especialista en economía.
+
+<br> <br>
+       
+Cuando un trabajador se jubila deja de cotizar a la Seguridad Social y la Empresa tambien.
+La SS deja de percibir un ingreso y pasa a pagar una pension.
+La pension cotiza por el IRPF, este impuesto lo gestiona el gobierno y lo gasta donde quiera.
+
+<br> <br>
+
+ <p Propuesta.style="color:red; font-size: 1.5rem;">Propuesta</p>
+
+ <br>
+ Sobre una hiptesis del 15% del IRPF, el pensionsta sigue pagando los mismo, pero la distribucion del impuesto cambia.
+ Sigues pagando el 15%, pero el IRPF pasa a ser del 10% y el 5% va para la SS, asi el Gobierno no puede disponer
+ de ese 5% que iria directo a la SS.
+        </p>
+    
+    </article>
+</section>
+
+<section id="articulo3" hidden>
+    <article>
+        <h2>Cultura</h2>
+        <p>Contenido del tercer artículo.</p>
+    </article>
+</section>
+
+<section id="articulo4" hidden>
+    <article>
+        <h2>A cuatro</h2>
+        <p>
+ Todos los meses de enero, se da el caso de numerosos pensionistas que se topan con la desagradable sorpresa 
+de que la revalorización bruta aprobada 
+por el Gobierno, en función del IPC, no se traduce en un aumento neto idéntico del importe de su pensión. 
+         
+ Esto se debe a que la pensión es un rendimiento del trabajo y, como tal, se halla sujeta a retención del IRPF y
+además existe la obligación de presentar la declaración de la Renta, 
+ cuando su cuantía supera los límites legales; al igual que sucede con el resto de contribuyentes.
+ Hay varias interpretaciones
+
+
+ Es decir, al incrementarse los ingresos brutos del pensionista con la revalorización según el IPC (en 2026 se aplica un alza del 2,7% general),
+se incrementa también el porcentaje de retención del IRPF en su nómina, cuyo tramo varía en función de los ingresos de la persona. 
+
+Así funciona la retención de IRPF de las pensiones
+
+Los porcentajes de retención por IRPF que se aplican a las pensiones dependen de estos factores:
+
+- El importe de la pensión. Las pagas de bajo importe suelen estar exentas de retención, o soportan una retención mínima. 
+Sin embargo, cuanto mayor sea cuantía de la prestación, mayor es el porcentaje de retención.
+
+- Edad del pensionista. Los mayores de 65 años están exentos de los primeros 8.000 euros anuales en rendimientos de trabajo,
+ mientras que los mayores de 75 años, de los primeros 12.000 euros en cómputo anual. ¡Ojo solo para lasd ebajo importe!
+
+
+Por qué no es doble tributación del IRPF
+
+• Impuesto sobre la renta, no sobre el ahorro acumulado: El IRPF grava cada ingreso en el momento en que se percibe 
+como renta. Durante la vida laboral tributa el salario y, 
+al jubilarse, la pensión tributa como rendimiento del trabajo (artículo 17.2 de la Ley 35/2006).
+       
+
+OJO PENSIONISTA¿Que dicen los de Bruselas?La indignación ante esta injusta medida ha ido creciendo:El cobro de la pensión debe ser
+ excluido del Impuesto sobre la Renta de las Personas Físicas (IRPF) por las siguientes razones: 1º - No es un rendimiento del trabajo. 
+ 2º - Estas pensiones actuales se fueron generando durante la vida laboral que con el cobro de los salarios mensuales/anuales fuero sometidas ya al I.R.P.F 
+ Es decir ya tributaron por el impuesto. 3º - Por lo tanto al ser sometidas en la actualidad al I.R.P.F están siendo gravadas nuevamente por el mismo impuesto, 
+Cayendo claramente en la figura de “doble imposición”, que se debe corregir haciendo que la pensión quede excluida del I.R.P.F 
+
+Según explica, no se paga dos veces este impuesto sino que se tributa por los ingresos: “Es un impuesto sobre la renta de las personas físicas, 
+no afecta únicamente al salario de los trabajadores”. “Las pensiones que no se enmarcan en los mínimos establecidos deben tributar porque una pensión 
+no deja de ser una renta que se percibe, igual que las rentas de capital con los alquileres o las de otros orígenes”, comenta la especialista en economía.
+
+
+       
+       
+ Cuando un trabajador se jubila deja de cotizar a la Seguridad Social y la Empresa tambien.
+La SS deja de percibir un ingreso y pasa a pagar una pension.
+ La pension cotiza por el IRPF, este impuesto lo gestiona el gobierno y lo gasta donde quiera.
+
+
+
+        Propuesta.
+        Sobre una hiptesis del 15% del IRPF, el pensionsta sigue pagando los mismo, pero la distribucion del impuesto cambia.
+        Sigues pagando el 15%, pero el IRPF pasa a ser del 10% y el 5% va para la SS, asi el Gobierno no puede disponer
+        de ese 5% que iria directo a la SS.
+        </p>
+        </p>
+    </article>
+</section>
+
+<button class="boton" onclick="volverInicio()">
+    Volver al inicio
+</button>
+
+</main>
+
+<footer>
+    Mi periódico digital
+</footer>
+
+<script>
+
+function mostrarArticulo() {
+    document.querySelectorAll("main section").forEach(function(seccion) {
+        seccion.hidden = true;
+    });
+
+    var seleccionado = document.getElementById("menu").value;
+    document.getElementById(seleccionado).hidden = false;
+
+    window.scrollTo(0, 0);
+}
+
+function volverInicio() {
+    document.querySelectorAll("main section").forEach(function(seccion) {
+        seccion.hidden = true;
+    });
+
+    document.getElementById("inicio").hidden = false;
+    document.getElementById("menu").value = "inicio";
+
+    window.scrollTo(0, 0);
+}
+
+/* CONTROLES DE MUSICA */
+
+function iniciarMusica() {
+    var audio = document.getElementById("musica");
+    if (!audio) return;
+    audio.volume = 0.35;
+    audio.play().catch(function() {
+        console.log("El navegador no permite iniciar la música todavía.");
+    });
+}
+
+function pararMusica() {
+    var audio = document.getElementById("musica");
+    if (audio) audio.pause();
+}
+
+/* INTENTO DE REPRODUCCION AUTOMATICA */
+
+window.addEventListener("load", function() {
+    var audio = document.getElementById("musica");
+    if (!audio) return;
+    audio.volume = 0.35;
+
+    audio.play().catch(function() {
+        function activarAlPrimerToque() {
+            audio.play().catch(function() {});
+
+            document.removeEventListener("pointerdown", activarAlPrimerToque);
+            document.removeEventListener("keydown", activarAlPrimerToque);
+        }
+
+        document.addEventListener("pointerdown", activarAlPrimerToque);
+        document.addEventListener("keydown", activarAlPrimerToque);
+    });
+});
+
+// 1. FECHA DE HOY EN ESPAÑOL
+  document.getElementById('fecha').textContent = new Intl.DateTimeFormat('es-ES', {
+    weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
+  }).format(new Date());
+
+  const elLugar = document.getElementById('lugar');
+  const elTemp = document.getElementById('temp');
+  const elDetalle = document.getElementById('detalle');
+  const elActualizado = document.getElementById('actualizado');
+
+  // 2. TEMPERATURA - Open-Meteo, gratis y sin API key
+  async function cargarClima(lat, lon, nombre) {
+    elLugar.textContent = '📍 ' + nombre;
+    try {
+      const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,wind_speed_10m&timezone=auto`);
+      const data = await res.json();
+      const c = data.current;
+      elTemp.textContent = Math.round(c.temperature_2m);
+      elDetalle.textContent = `Sensación ${Math.round(c.apparent_temperature)}°C · Humedad ${c.relative_humidity_2m}% · Viento ${Math.round(c.wind_speed_10m)} km/h`;
+      elActualizado.textContent = 'Actualizado: ' + new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+    } catch(e) {
+      elDetalle.textContent = 'No se pudo cargar la temperatura.';
+    }
+  }
+
+  // 3. DETECTAR CIUDAD SOLO POR IP - NUNCA pide permiso de ubicación
+  async function detectarPorIP() {
+    // Intento 1: ipapi.co
+    try {
+      const r = await fetch('https://ipapi.co/json/');
+      const j = await r.json();
+      if (j.latitude && j.longitude && j.city) {
+        await cargarClima(j.latitude, j.longitude, `${j.city}, ${j.country_name}`);
+        return;
+      }
+    } catch(e) {}
+
+    // Intento 2: ip-api.com (respaldo si el primero falla)
+    try {
+      const r = await fetch('https://ip-api.com/json/?fields=status,city,country,lat,lon');
+      const j = await r.json();
+      if (j.status === 'success') {
+        await cargarClima(j.lat, j.lon, `${j.city}, ${j.country}`);
+        return;
+      }
+    } catch(e) {}
+
+    // Intento 3: ipwho.is (segundo respaldo)
+    try {
+      const r = await fetch('https://ipwho.is/');
+      const j = await r.json();
+      if (j.success && j.latitude && j.longitude) {
+        await cargarClima(j.latitude, j.longitude, `${j.city}, ${j.country}`);
+        return;
+      }
+    } catch(e) {}
+
+    elLugar.textContent = '📍 No se pudo detectar tu ciudad';
+    elDetalle.textContent = 'Comprueba tu conexión a internet.';
+  }
+
+  detectarPorIP();
+
+</script>
+
+</body>
+</html>
