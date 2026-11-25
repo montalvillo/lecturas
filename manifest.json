@@ -1,0 +1,26 @@
+{
+  "name": "La Página de Malanda",
+  "short_name": "Malanda",
+  "description": "Periódico digital y artículos de La Página de Malanda",
+  "lang": "es-ES",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f1f1f1",
+  "theme_color": "#17365d",
+  "icons": [
+    {
+      "src": "./icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}
